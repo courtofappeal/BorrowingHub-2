@@ -1,0 +1,289 @@
+{% extends 'dashboard_app/base.html' %}
+{% load static %}
+{% block title %}Calendar - BorrowingHub{% endblock %}
+{% block nav_calendar_active %}active{% endblock %}
+{% block content %}
+<style>
+  .calendar-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .calendar-header {
+    margin-bottom: 2rem;
+  }
+
+  .calendar-header h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .calendar-header p {
+    color: #64748b;
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  .calendar-layout {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+  }
+
+  .calendar-main {
+    flex: 1;
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .calendar-sidebar {
+    width: 360px;
+  }
+
+  .calendar-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .calendar-card h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 1rem 0;
+  }
+
+  .calendar-card p {
+    color: #64748b;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin: 0 0 1rem 0;
+  }
+
+  .calendar-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: #475569;
+  }
+
+  .legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .legend-color.orange {
+    background: #f59e0b;
+  }
+
+  .legend-color.red {
+    background: #ef4444;
+  }
+
+  /* FullCalendar Customization */
+  #calendar {
+    font-family: 'Inter', sans-serif;
+  }
+
+  .fc {
+    --fc-border-color: #e2e8f0;
+    --fc-button-bg-color: #ef4444;
+    --fc-button-border-color: #ef4444;
+    --fc-button-hover-bg-color: #dc2626;
+    --fc-button-hover-border-color: #dc2626;
+    --fc-button-active-bg-color: #b91c1c;
+    --fc-button-active-border-color: #b91c1c;
+    --fc-today-bg-color: #fef2f2;
+  }
+
+  .fc .fc-button {
+    text-transform: capitalize;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+  }
+
+  .fc .fc-toolbar-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .fc .fc-daygrid-day-number {
+    color: #475569;
+    font-weight: 500;
+  }
+
+  .fc .fc-col-header-cell {
+    background: #f8fafc;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+  }
+
+  .fc-event {
+    cursor: pointer;
+    border: none;
+    padding: 2px 4px;
+    font-size: 0.8125rem;
+  }
+
+  @media (max-width: 1024px) {
+    .calendar-layout {
+      flex-direction: column;
+    }
+
+    .calendar-sidebar {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .calendar-wrapper {
+      padding: 1rem;
+    }
+  }
+</style>
+
+<div class="calendar-wrapper">
+  <div class="calendar-header">
+    <h1>Calendar</h1>
+    <p>View and manage upcoming due dates for your borrowed items</p>
+  </div>
+
+  <div class="calendar-layout">
+    <div class="calendar-main">
+      <div id="calendar"></div>
+    </div>
+
+    <div class="calendar-sidebar">
+      <div class="calendar-card">
+        <h3>Event Legend</h3>
+        <p>Click on any event in the calendar to view detailed information</p>
+        <div class="calendar-legend">
+          <div class="legend-item">
+            <div class="legend-color orange"></div>
+            <span>Your Returns</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color red"></div>
+            <span>Items Due Back to You</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Detail modal for event -->
+  <div id="detailModal" class="modal requests-modal" style="display:none;">
+    <div class="modal-inner">
+      <header class="modal-header">
+        <h3 id="detailModalTitle">Request Detail</h3>
+        <button id="closeDetailModal" class="modal-close">×</button>
+      </header>
+      <div class="modal-body" id="detailModalBody">
+        <!-- content loaded via fetch -->
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_css %}
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+{% endblock %}
+{% block extra_js %}
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+      
+      var calendarEl = document.getElementById('calendar');
+      if (calendarEl) {
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'dayGridMonth',
+          headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,dayGridWeek'
+          },
+          height: 'auto',
+          contentHeight: 'auto',
+          events: '{% url "calendar_app:calendar_events" %}',
+          eventClick: function(info) {
+            var props = info.event.extendedProps || {};
+            var brId = props.borrow_request_id;
+            if (brId) {
+              var url = '/requests/detail/' + brId + '/';
+              fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+                .then(r => r.text())
+                .then(html => {
+                  document.getElementById('detailModalBody').innerHTML = html;
+                  document.getElementById('detailModal').style.display = 'block';
+                  document.getElementById('closeDetailModal').onclick = function() {
+                    document.getElementById('detailModal').style.display = 'none';
+                  };
+                  setTimeout(function() {
+                    var approveBtns = document.querySelectorAll('.approve-request');
+                    var rejectBtns = document.querySelectorAll('.reject-request');
+                    function attach(btns) {
+                      btns.forEach(function(b) {
+                        b.addEventListener('click', function() {
+                          var u = this.dataset.url;
+                          fetch(u, {
+                            method: 'POST',
+                            headers: {'X-CSRFToken': getCookie('csrftoken')}
+                          })
+                          .then(res => res.json())
+                          .then(data => {
+                            if (data.success) {
+                              location.reload();
+                            } else {
+                              alert(data.error || 'Error');
+                            }
+                          });
+                        });
+                      });
+                    }
+                    attach(approveBtns);
+                    attach(rejectBtns);
+                  }, 50);
+                })
+                .catch(err => console.error('Fetch error:', err));
+            } else {
+              alert(info.event.title + '\nDate: ' + info.event.start.toLocaleDateString());
+            }
+          }
+        });
+        calendar.render();
+      }
+    });
+  </script>
+{% endblock %}
