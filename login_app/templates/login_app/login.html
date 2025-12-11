@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In - BorrowingHub</title>
+  {% load static %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'login_app/login.css' %}?v=2">
+</head>
+<body class="login-body">
+    
+  <!-- Header -->
+  <header class="login-header">
+    <nav class="login-nav">
+      <a href="{% url 'landing_app:landing' %}" class="login-brand" style="text-decoration: none; color: inherit;">
+        <span class="login-logo">BH</span>
+        <div class="login-title-group">
+          <span class="login-brand-title">Borrowing Hub</span>
+          <span class="login-subtitle-text">Track your borrowed items</span>
+        </div>
+      </a>
+      <div class="login-nav-actions">
+        <a href="{% url 'login_app:login' %}" class="login-login-btn">Login</a>
+        <a href="{% url 'registration_app:register' %}" class="login-register-btn">Register</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main container -->
+  <main class="login-main-container">
+    <div class="login-card">
+
+      <!-- Logo and title -->
+      <div class="login-card-header">
+        <span class="login-card-logo">BH</span>
+        <span class="login-title">Borrowing Hub</span>
+      </div>
+
+      <div class="login-subtitle">Sign in to your account</div>
+
+      <!-- Messages -->
+      {% if messages %}
+      <div class="login-messages">
+        {% for message in messages %}
+        <div class="login-alert login-alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Login form -->
+      <form method="post" class="login-form">
+        {% csrf_token %}
+
+        <!-- Username -->
+        <div class="login-form-group">
+          <label for="username" class="login-label">Username</label>
+          <input type="text" name="username" id="username" placeholder="Enter your username" required>
+        </div>
+
+        <!-- Password -->
+        <div class="login-form-group">
+          <label for="password" class="login-label">Password</label>
+          <input type="password" name="password" id="password" placeholder="Enter your password" required>
+        </div>
+
+        <button type="submit" class="login-btn">Sign In</button>
+      </form>
+
+      <div class="login-footer">
+        <span>Don't have an account?</span>
+        <a href="{% url 'registration_app:register' %}" class="login-link">Sign up here</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="{% static 'login_app/login.js' %}"></script>
+</body>
+</html>
